@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SageX3OutlookInfrastructure\SageX3OutlookInfrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

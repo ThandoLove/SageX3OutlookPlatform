@@ -1,24 +1,39 @@
 ﻿Office.onReady(() => {
-    document.getElementById("btnSend").onclick = sendEmail;
+    const btn = document.getElementById("btnSend");
+    if (btn) {
+        btn.onclick = sendEmail;
+    }
 });
 
-async function sendEmail() {
-
+function sendEmail() {
     const item = Office.context.mailbox.item;
 
-    const emailData = {
-        subject: item.subject,
-        body: item.body.getAsync("text"),
-        from: item.from.emailAddress,
-        toRecipients: item.to.map(r => r.emailAddress),
-        conversationId: item.conversationId
-    };
+    // Correct way to get the body asynchronously
+    item.body.getAsync(Office.CoercionType.Text, async (result) => {
+        if (result.status === Office.AsyncResultStatus.Succeeded) {
+            const bodyText = result.value;
 
-    await fetch("https://yourserver/api/email/process", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(emailData)
+            const emailData = {
+                subject: item.subject,
+                body: bodyText,
+                from: item.from ? item.from.emailAddress : "Unknown",
+                // Accessing recipients carefully
+                toRecipients: item.to ? item.to.map(r => r.emailAddress) : [],
+                conversationId: item.conversationId
+            };
+
+            try {
+                const response = await fetch("https://yourserver/api/email/process", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(emailData)
+                });
+                console.log("Server responded:", await response.text());
+            } catch (error) {
+                console.error("Fetch error:", error);
+            }
+        } else {
+            console.error("Failed to get body:", result.error.message);
+        }
     });
 }
